@@ -1,0 +1,457 @@
+001) 界面不回显
+
+#!/bin/bash
+printf "Enter code:\n" 
+stty -echo
+read pass < /dev/tty
+printf "Enter again: \n"
+read pass2 < /dev/tty
+stty echo 
+ 
+echo $pass
+echo $pass2
+ 
+ 
+002) shell颜色 
+    \033[40;**m
+     红 31     绿 32     黄 33     蓝 34     紫 35     浅蓝 36     白 37 
+echo -ne "\033[40;31m     Red          \n\033[40;37m"
+echo -ne "\033[40;32m     Green     \n\033[40;37m"
+echo -ne "\033[40;33m     Yellow     \n\033[40;37m"
+echo -ne "\033[40;34m     Blue     \n\033[40;37m"
+echo -ne "\033[40;35m     Violet     \n\033[40;37m"
+echo -ne "\033[40;36m     Cyan     \n\033[40;37m"
+echo -ne "\033[40;37m     White     \n\033[40;37m"
+字背景颜色范围:40-49
+40:黑             41:深红             42:绿 
+43:黄色         44:蓝色             45:紫色 
+46:深绿         47:白色 
+
+字颜色:30-39
+30:黑             31:红            32:绿 
+33:黄             34:蓝色         35:紫色 
+36:深绿         37:白色 
+ANSI控制码
+\33[0m 关闭所有属性                                     \33[01m 设置高亮度
+\33[04m 下划线                                              \33[05m 闪烁
+\33[07m 反显                                                  \33[08m 消隐 
+\33[30m -- \33[37m 设置前景色                    \33[40m -- \33[47m 设置背景色 
+\33[nA 光标上移n行                                        \33[nB 光标下移n行
+\33[nC 光标右移n行                                        \33[nD 光标左移n行
+\33[y;xH设置光标位置                                      \33[2J 清屏 
+\33[K 清除从光标到行尾的内容                        \33[s 保存光标位置 
+\33[u 恢复光标位置                                         \33[?25l 隐藏光标 
+\33[?25h 显示光标
+ 
+003) 脚本参数含义
+$#：参数个数
+$?：退出状态
+$$：脚本自身的PID
+$!：在后台运行的最后工作的PID
+$-：传给脚本的flag
+$_：保存之前执行命令的最后一个参数
+$@：同$*
+$*：所有的位置参数，必须""
+$0：当前脚本的名字，或正则表达式中表示整行输出
+ 
+$*：加双引号，所有参数形成一个字符串
+$@：加双引号，保留参数值
+以上二者不加双引号，都是保留参数值
+ 
+ 
+004) 退出参数
+0：成功退出
+> 0：哎重定向或单词展开期间（~、变量、命令、算术展开、单词切割）失败
+1-125：不成功退出，特殊含义有单独命令定义
+126：命令找到了，但文件无法执行
+127：命令找不到
+>128：命令收到信号而死亡
+ 
+005) 显示当前目录下文件夹大小
+    du -h --max-depth=1 
+超找$str在$all中的位置
+echo $all | awk -F"$str" '{print "%d", length($1)}'
+列出下一级子目录
+tree -d -L 1
+ls -d */
+find ./* -maxdepth 0 -type d
+ls -Ad */
+ls -F|grep "/"
+
+006) 换行符添加删除
+每行加上换行符 
+    sed 's/\>/\n/g' $FILE
+每行删除换行符
+    sed -i -e ':a;N;s/\n//g;ta' $FILE
+末行删除一个字符
+    sed -i '$s/.$//' $FILE
+
+007) 输入是否为数字
+echo $i | awk '{print($0~/^[+-]?[0-9]?[0-9]?[0-9]?(,[0-9][0-9][0-9])*(\.[0-9]*)?$/)?"digit":"string"}'
+简单处理：awk '{print($0~/^([0-9])+$/)}'，是数字回显1，非数字0
+$0~/^[0-9\.]+$/
+小数
+
+008) sed实现head
+head -10 $file
+    count=$(echo $1 | sed 's/^-//')
+    shift
+    sed ${count}q "$@"
+
+009) 修改时区
+    1. cp -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    2. sed -i -e "s/^ZONE=.$/ZONE=\"Asia\/Shanghai\"/g" /etc/sysconfig/clock
+
+010) Bios和系统时间交互
+    hwclock --systohc 将系统时间写入bios
+    hwclock --hctosys 将bios时间写入系统
+    /usr/sbin/ntpdate 210.72.145.44
+    /sbin/clock -w
+
+011) 无密码拷贝
+1. 本机，ssh-keygen，一路回车
+2. 目标机，`本机，cat .ssh/id_rsa.pub` >> .ssh/authorized_keys
+ 
+.ssh
+此文件夹为700/750，other权限必须为0
+其中文件为600/640，other权限必须为0
+包括 authorized_keys
+
+012) 管道和重定向$
+以 < 改变 标准输入
+    p < file：可将p的标准输入改为file
+    tr -d '\r' < a.txt
+以 > 改变 标准输出
+    p > file
+    tr -d '\r' < a.txt > b.txt：已tr方式读取a.txt，并将结果导入b.txt
+以 >> 附加到文件
+    p >> file
+以 | 建立管道
+    p1 | p2：可将p1的标准输出修改为p2的标准输入
+
+013) 进制转换
+$(($b#$a/$c))
+将$a按照$b的进制，转换成10进制数字，然后再进行$c的操作
+QUARTER=$[10#$MINUTE/15]
+#后的值按照#前的进制，解析成10进制的数字
+
+014) 判断是否在数组中
+"${hwset[@]/${hwtype}/}"
+从${hwset[@]}数组中，删除${hwtype}
+如果删除后不变，则说明${hwtype}不在数组中
+
+015) 数组
+  长度：${#array[@]}
+  某值：${array[$i]}
+  首元素：${array} / ${array[1]}
+  输出全部：${array[@]}
+  某值长度：${#array[$i]}
+  下标1-3： ${array[@]:1:3}
+  下标大于3：${array[@]:2}
+  下标小于3：${array[@]::2}
+ 
+016) 字符串
+定义了一个变量为：
+file=/dir1/dir2/dir3/my.file.txt
+我们可以用 ${ } 分别替换获得不同的值：
+${file#*/}：拿掉第一条 / 及其左边的字符串：dir1/dir2/dir3/my.file.txt
+${file##*/}：拿掉最后一条 / 及其左边的字符串：my.file.txt
+${file#*.}：拿掉第一个 . 及其左边的字符串：file.txt
+${file##*.}：拿掉最后一个 . 及其左边的字符串：txt
+${file%/*}：拿掉最后条 / 及其右边的字符串：/dir1/dir2/dir3
+${file%%/*}：拿掉第一条 / 及其右边的字符串：(空值)
+${file%.*}：拿掉最后一个 . 及其右边的字符串：/dir1/dir2/dir3/my.file
+${file%%.*}：拿掉第一个 . 及其右边的字符串：/dir1/dir2/dir3/my
+ 
+# 是去掉左边(在鉴盘上 # 在 $ 之左边)
+% 是去掉右边(在鉴盘上 % 在 $ 之右边)
+单一符号是最小匹配；两个符号是最大匹配。
+ 
+${file:0:5}：提取最左边的 5 个字节：/dir1
+${file:5:5}：提取第 5 个字节右边的连续 5 个字节：/dir2
+ 
+我们也可以对变量值里的字符串作替换：
+${file/dir/path}：将第一个 dir 提换为 path：/path1/dir2/dir3/my.file.txt
+${file//dir/path}：将全部 dir 提换为 path：/path1/path2/path3/my.file.txt
+ 
+利用 ${ } 还可针对不同的变量状态赋值(没设定、空值、非空值)：
+${file-my.file.txt} ： 假如$file没有设定，则使用 my.file.txt 作传回值。(空值及非空值时不作处理)
+${file:-my.file.txt} ：假如$file没有设定或为空值，则使用 my.file.txt 作传回值。 (非空值时不作处理)
+${file+my.file.txt} ： 不管$file为何值，均使用my.file.txt作传回值。
+${file:+my.file.txt} ：若$file为非空值，则使用my.file.txt作传回值。 (没设定及空值时不作处理)
+${file=my.file.txt} ：若 $file 没设定，则使用 my.file.txt 作传回值，同时将 $file 赋值为 my.file.txt 。 (空值及非空值时不作处理)
+${file:=my.file.txt} ：若 $file 没设定或为空值，则使用 my.file.txt 作传回值，同时将 $file 赋值为 my.file.txt 。 (非空值时不作处理)
+${file?my.file.txt} ：若 $file 没设定，则将 my.file.txt 输出至 STDERR。 (空值及非空值时不作处理)
+${file:?my.file.txt} ：若 $file 没设定或为空值，则将 my.file.txt 输出至 STDERR。 (非空值时不作处理)
+还有哦，${#var} 可计算出变量值的长度：
+${#file} 可得到 27 ，因为 /dir1/dir2/dir3/my.file.txt 刚好是 27 个字节.
+ 
+ 
+017) 语法检查
+bash -n script.sh
+bash -v script.sh
+bash -x script.sh
+或通过
+set -o verbose
+set -o xtrace来用指定-v -x
+
+018) 命名
+1. 所在行
+    ${LINENO}
+2. 所在函数
+    ${FUNCNAME}
+3.所在文件
+ 
+19) 命令sed
+sed -e 's;_;__;g' -e 's;/;_;g'
+sed 's;_;__;g ; s;/;_;g'
+
+sed 's;str1;str2;2'
+
+#cat s.sed
+s/str1/str2/g
+s/str3/str4/g
+sed -f s.sed src.txt > dst.txt
+
+sed 'keyword/ s/old_content/new_content/'   存在keyword的行中，old_content替换为new_content
+sed 'keyword/ s/& and new_content'            存在keyword的行中，keyword后面添加" and new_content"
+
+sed ${count}q file        取文件的前$count行
+sed -n '$p' file              取文件的最终行
+sed -n '40,100p' file      取文件的40-100行
+sed '/foo/, /bar/ s/abc/def/g'    取包含foo的行，在其中搜索bar，找到后，adc换成def
+
+否定正则  '/used/!s/new/used/g'
+
+019) expr
+判断 e1 <= e2
+如果是真，返回1；如果是假，返回0
+如果两个数字都是整数，以数字方式比较；
+否则以字符串方式比较
+i=`expr $i + 1`
+
+sort
+sort | uniq
+sort | uniq -c    前面添加每项出现的次数
+sort | uniq -d    显示重复项
+sort | uniq -u    显示未重复项
+
+
+020) 命令awk
+
+多分隔符    awk -F "$s1|$s2"
+多分隔符    awk -F "[$s1$s2]"
+awk 'FNR <= $n'    <=>    head -n $n    <=> head -$n  <=>    sed -e $nq  <=>    sed $nq
+
+将时间戳转换成“年月日时分秒”的格式
+awk '{print strftime("%Y%m%d%H%M%S",$1)}
+awk '{print strftime("%F %T",$1)}' 
+将日期转为时间戳
+awk 'BEGIN {printf("%d\n",mktime(2015" "8" "5" "15" "09" "0))}'
+
+内建变量
+FILENAME   当前输入文件的名称
+FNR        当前输入文件的记录数
+FS         字段分隔字符（正则，默认" "）
+NF         当前记录的字段数
+NR         在job中的记录数
+OFS        输出字段分割字符" "
+ORS        输出记录分割字符"\n"
+RS         输入记录分割字符(仅在gawk和mawk中使用)
+
+awk 'BEGIN {print ENVIRON["HOME"]; print ENVIRON["USER"]}'
+
+021) 命令cut
+cut -c 1-10：输出第1-10个字符
+
+022) 命令ls
+ll -S        按照大小从大到小排序
+ll -Sr       按照大小从小到大排序
+ll -t        按照修改时间从早到晚排序
+ll -tr       按照修改时间从晚到早排序
+
+023) 命令find
+find . -mtime -1 -type f -print
+用来查找过去24小时（-mtime –2则表示过去48小时）
+
+024) 命令mutt
+$subject = $ENV{'subject'};
+$mail_to = $ENV{'mail_to'};
+$attach = $ENV{'attach'};
+$content = $ENV{'content'};
+
+delete @ENV{"IFS","CDPATH","ENV","BASH_ENV"};
+$ENV{'PATH'}='/bin:/usr/bin';
+$< = $>;
+$( = $) = 0;
+
+$subject =~m/(.*)/;
+$subject=$1;
+$mail_to =~m/(.*)/;
+$mail_to=$1;
+$attach =~m/(.*)/;
+$attach=$1;
+$content =~m/(.*)/;
+$content=$1;
+
+$cmd="/usr/bin/mutt $mail_to";
+$cmd.=($subject eq '')?'':' -s "$subject"';
+$cmd.=($attach eq '')?'':' -a $attach';
+$cmd.=($content eq '')?' < /dev/null':' < $content';
+$ret=system("su netentsec -c '".$cmd."'");
+print($ret);
+
+025) 命令svn
+
+SVN汉字
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US.UTF-8
+source ~/.bashrc
+
+026) 命令getops
+#!/bin/bash
+while getopts h:ms option
+do
+    case "$option" in
+        h)
+            echo "option:h, value $OPTARG"
+            echo "next arg index:$OPTIND";;
+        m)
+            echo "option:m"
+            echo "next arg index:$OPTIND";;
+        s)
+            echo "option:s"
+            echo "next arg index:$OPTIND";;
+        \?)
+            echo "Usage: args [-h n] [-m] [-s]"
+            echo "-h means hours"
+            echo "-m means minutes"
+            echo "-s means seconds"
+            exit 1;;
+    esac
+done
+
+echo "*** do something now ***"
+
+027) 命令tcpdump
+
+tcpdump总的的输出格式为：系统时间 来源主机.端口 > 目标主机.端口 数据包参数
+
+监控网络接口的数据包，默认eth0
+tcpdump -i eth1
+tcpdump host ${name}/${ip}
+tcpdump host ${name1}|${ip1} and \( ${name2}|${ip2} or ${nam3}|${ip3} \)
+tcpdump -i eth0 src/dst host ${name}
+
+监视指定主机和端口的数据包
+tcpdump tcp port 23 host ${name}
+tcpdump udp port 123
+
+监视指定网络的数据包
+tcpdump net ${net_name}
+tcpdump 'gateway ${gateway_name} and (port ftp or ftp-data)'
+tcpdump ip and not net ${local_net}
+
+监视指定协议的数据包
+tcpdump 'tcp[tcpflags] & (tcp-syn|tcp-fin) != 0 and not src and dst net ${local_net}'
+     <TCP会话中的的开始和结束数据包, 并且数据包的源或目的不是本地网络上的主机>
+tcpdump 'tcp port 80 and (((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)'
+     <所有源或目的端口是80, 网络层协议为IPv4, 并且含有数据,而不是SYN,FIN以及ACK-only等不含数据的数据包>
+tcpdump 'gateway ${gw_name} and ip[2:2] > 576'
+     <长度超过576字节, 并且网关地址是gw_name的IP数据包>
+tcpdump 'ether[0] & 1 = 0 and ip[16] >= 224'
+     <tcpdump 'ether[0] & 1 = 0 and ip[16] >= 224'>
+tcpdump 'icmp[icmptype] != icmp-echo and icmp[icmptype] != icmp-echoreply'    
+     <除'echo request'或者'echo reply'类型以外的ICMP数据包>
+
+tcpdump tcp -i eth1 -t -s 0 -c 100 and dst port ! 22 and src net 192.168.1.0/24 -w ./target.cap
+     <-t : 不显示时间戳>
+     <-s 0 : 抓取数据包时默认抓取长度为68字节。加上-S 0 后可以抓到完整的数据包>
+     <-c 100 ：只抓取100个包>
+     <w ./target.cap : 保存成cap文件>
+    
+抓取HTTP包
+tcpdump  -XvvennSs 0 -i eth0 tcp[20:2]=0x4745 or tcp[20:2]=0x4854
+     <0x4745 为"GET"前两个字母"GE",0x4854 为"HTTP"前两个字母"HT">
+
+
+028) 命令tr
+
+translate的简写，它不能翻译句子，只能翻译单个字符
+tr命令不接受指定的文件参数，而只是对标准输入进行翻译
+tr的命令格式是tr SET1 SET2，凡是在SET1中的字符，都会被替换为SET2中相应位置上的字符
+
+使用tr能把小写都转换成大写么？这个正是tr所擅长的地方
+[root@ ~]$ cat word.txt
+AbcdE
+[root@ ~]$ tr 'a-z' 'A-Z' < word.txt
+ABCDE
+
+[CHAR*]怎么用？SET2专用的设定，功能是重复指定的字符到与SET1相同长度为止
+[root@ ~]$ cat number.txt
+1234567890
+[root@ ~]$ tr '1-5′ '[A*]' < number.txt
+AAAAA67890
+
+[CHAR*REPEAT]怎么用？功能是将CHAR重复REPEAT次数。其中REPEAT次数可以用八进制数表示，但记得要以0开头表示八进制数。
+[root@ ~]$ tr '1-9' '[A*5]BCDE' < number.txt
+AAAAABCDE0
+
+在tr中还有哪些表示集合的符号呢?
+[:alnum:] ：所有字母字符与数字
+[:alpha:] ：所有字母字符
+[:blank:] ：所有水平空格
+[:cntrl:] ：所有控制字符
+[:digit:] ：所有数字
+[:graph:] ：所有可打印的字符(不包含空格符)
+[:lower:] ：所有小写字母
+[:print:] ：所有可打印的字符(包含空格符)
+[:punct:] ：所有标点字符
+[:space:] ：所有水平与垂直空格符
+[:upper:] ：所有大写字母
+[:xdigit:] ：所有 16 进位制的数字
+
+将所有的数字都转换为字符x。
+[root@ ~]$ tr [:alnum:] '[x*]' < number.txt
+xxxxxxxxxx
+
+tr里面包含SET1和SET2，那如果出现两个集合的大小不同的情况，tr如何处理呢？
+第一种情况SET1>SET2：SET1中多出来的字符都会和SET2中最后一个字符相对应。
+第二种情况SET1<SET2：SET2中多余的部分将被抛弃。
+
+-s选项
+是专门针对SET1起作用的，意思是如果发现有连续的SET1里的字符，就把它们缩减为1个。
+[root@ ~]$ cat spaces.txt
+How   are               you?
+Fine! Thank    you!
+[root@ ~]$ tr -s ' ' ' ' < spaces.txt
+How are you?
+Fine! Thank you!
+
+-d选项
+是用来删除字符用的。格式是这样的：tr -d charset
+[root@ ~]$ tr -d ' ' < spaces.txt
+Howareyou?
+Fine!Thankyou!
+把文章中的数字都删除，就tr -d [0-9] < filename就可以了。
+
+tr [options] [source-char-list] [replace-char-list] < filename
+用途：转换字符，例如：将大写字符转换成小写字符。选项可以让你指定所要删除的字符，以及将一串重复出现的字符浓缩成一个。
+常用选项：
+-c：取source-char-list的反义，所有不在source-char-list中的字符。常与-d , -s配合使用。
+-d：删除source-char-list中所定义的字符。
+-s：浓缩重复的字符。如果标准输入中连续重复出现source-char-list里所列的字符，则将其浓缩成一个。或者将其浓缩成replace-char-list中的字符。
+tr 'X' 'x' 把所有大写X转换成小写x
+tr '()' '{}' 把( )替换成{ }
+tr '[a-z]' '[A-Z]' 把所有小写字母变成大写字母
+tr '[A-Z]' '[N-ZA-M]' 把字符A-M分别转换成N-Z，而N-Z转换成A-M
+tr -s ' ' ' ' 把多个空格转换成单个空格
+tr -d '[0-9]' 删除所有数字
+
+
+引用:[a-z] a-z内的字符组成的字符串。
+[A-Z] A-Z内的字符组成的字符串。
+[0-9] 数字串。
+
+029)
